@@ -1,0 +1,41 @@
+workflows:
+  ios-workflow:
+    name: TechnoCorner iOS Build
+    instance_type: mac_mini_m1
+    max_build_duration: 60
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      xcode: latest
+      cocoapods: default
+      vars:
+        APP_STORE_CONNECT_ISSUER_ID: aa857d6e-a136-4327-991f-4e386a0eb39a
+        APP_STORE_CONNECT_KEY_IDENTIFIER: aa857d6e-a136-4327-991f-4e386a0eb39a
+        APP_STORE_CONNECT_PRIVATE_KEY: MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQglXKSZ0TqeEL3yXNO
+X5SEu7vZ3uViDBo1/x8hbB9rvVegCgYIKoZIzj0DAQehRANCAASxaLrVbYkA1pEM
+d/PXWST95SNucx/hT0ClbzdqpNdOd3yPRl///waArZtpY4ZZ2mlOf4TO/z9sXGJY
+OZCGWIrZ
+    scripts:
+      - name: Set up keychain
+        script: keychain initialize
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files com.votrenom.technocorner \
+            --type IOS_APP_STORE \
+            --create
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build iOS app
+        script: |
+          cd ios/App
+          xcode-project build-ipa \
+            --workspace App.xcworkspace \
+            --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_app_store: false
